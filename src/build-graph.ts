@@ -26,7 +26,7 @@ export function buildGraph(fileContent: FileContent) {
 class Node {
     tx: Tx
     edges: Node[] = []
-    // parents: Node[]
+    parents: Node[] = []
     public writeAddresses: Set<string>
     public writeStorage: Record<string, Set<string>>
 
@@ -36,7 +36,7 @@ class Node {
     constructor(tx: Tx) {
       this.tx = tx
 
-      this.writeAddresses = new Set(filterOutKnownAddresses(tx.Writes))
+      this.writeAddresses = new Set(tx.Writes)
       // eslint-disable-next-line unicorn/no-array-reduce, unicorn/prefer-object-from-entries
       this.writeStorage = Object.keys(tx.StorageWrites).reduce((prev, curr) => ({ ...prev, [curr]: new Set(tx.StorageWrites[curr]) }), {})
       this.readAddresses = new Set([...tx.Reads, ...tx.Writes])
@@ -48,6 +48,10 @@ class Node {
       this.edges.push(n)
     }
 
+    public addParent(n: Node) {
+      this.parents.push(n)
+    }
+
     toString() {
       return this.tx.Hash
     }
@@ -56,26 +60,26 @@ class Node {
 // returns if edge was added
 function decideEdge(newNode: Node, processedNode: Node): boolean {
   if ([...newNode.readAddresses].some(ra => processedNode.writeAddresses.has(ra))) {
-    addEdge(newNode, processedNode)
+    addEdge(processedNode, newNode)
     return true
   }
 
   if ([...processedNode.readAddresses].some(ra => newNode.writeAddresses.has(ra))) {
-    addEdge(processedNode, newNode)
+    addEdge(newNode, processedNode)
     return true
   }
 
   // eslint-disable-next-line no-eq-null, eqeqeq
   if (Object.keys(newNode.readStorage).some(rs => processedNode.writeStorage[rs] != null &&
       [...newNode.readStorage[rs]].some(rss => processedNode.writeStorage[rs].has(rss)))) {
-    addEdge(newNode, processedNode)
+    addEdge(processedNode, newNode)
     return true
   }
 
   // eslint-disable-next-line no-eq-null, eqeqeq
   if (Object.keys(processedNode.readStorage).some(rs => newNode.writeStorage[rs] != null &&
       [...processedNode.readStorage[rs]].some(rss => newNode.writeStorage[rs].has(rss)))) {
-    addEdge(processedNode, newNode)
+    addEdge(newNode, processedNode)
     return true
   }
 
@@ -84,13 +88,5 @@ function decideEdge(newNode: Node, processedNode: Node): boolean {
 
 function addEdge(child: Node, parent: Node) {
   parent.addEdge(child)
-  child.addEdge(parent)
+  child.addParent(parent)
 }
-
-function filterOutKnownAddresses(array: string[]) {
-  return array.filter(item =>
-    item !== "0xd533ca259b330c7a88f74e000a3faea2d63b7972" &&
-      item !== "0xe3b1e1647bece359c76582550f6e210999973b50" &&
-      item !== "0xd5d444af2788e78fb956818b577be9ebc5485d72")
-}
-
