@@ -9,7 +9,7 @@ describe("count", () => {
 
 async function run(): Promise<void> {
   const blocksString = (
-    await readFile("/Users/pahor/repo/blockparser/test/16064087.json")
+    await readFile("/Users/pahor/repo/blockparser/test/16026516.json")
   ).toString()
   const fileContent = JSON.parse(blocksString) as FileContent
 
@@ -82,7 +82,7 @@ function traverseTransactions(
     const writeStorage: Record<string, Set<string>> = Object.keys(tx.StorageWrites).reduce((prev, curr) => ({ ...prev, [curr]: new Set(tx.StorageWrites[curr]) }), {})
     const readsAddresses = [...filterOutKnownAddresses(tx.Reads), ...writesAddresses]
     // eslint-disable-next-line unicorn/no-array-reduce, unicorn/prefer-object-from-entries
-    // const readStorage: Record<string, Set<string>> = { ...Object.keys(tx.StorageReads).reduce((prev, curr) => ({ ...prev, [curr]: new Set(tx.StorageReads[curr]) }), {}), ...writeStorage }
+    const readStorage: Record<string, Set<string>> = { ...Object.keys(tx.StorageReads).reduce((prev, curr) => ({ ...prev, [curr]: new Set(tx.StorageReads[curr]) }), {}), ...writeStorage }
 
     if (readsAddresses.some(ra => parent.writeAddresses.has(ra))) {
       continue

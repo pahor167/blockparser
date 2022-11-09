@@ -8,6 +8,7 @@
    "Hash": "tran1",
    "GasUsed": 348391,
    "Reads": [
+    "readTran1",
     "0x918146359264c492bd6934071c6bd31c854edbc3",
     "0xf94fea0c87d2b357dc72b743b45a8cb682b0716e",
     "0x559ea867fc19798ca167797a02ac4cf3fabf465c",
@@ -36,8 +37,8 @@
    ],
    "Writes": [],
    "StorageReads": {
-    "readTran1Storage": [
-     "11",
+    "0x000000000000000000000000000000000000ce10": [
+     "0x91646b8507bf2e54d7c3de9155442ba111546b81af1cbdd1f68eeb6926b98d58",
      "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
      "0x773cc8652456781771d48fb3d560d7ba3d6d1882654492b68beec583d2c590aa",
      "0xcff58fbbf19e274834dbbb0d6c1c84666c663932b89291bf061ab49d7e3f639a"
@@ -143,6 +144,7 @@
    "Hash": "tran2",
    "GasUsed": 40668,
    "Reads": [
+    "readTran2",
     "0xcceb5af6a01c70884b4a80d838a4368465bfaeb7",
     "0x0fa8a05541cae6855ab3890378b3b15d56407553",
     "0x918146359264c492bd6934071c6bd31c854edbc3",
@@ -155,10 +157,10 @@
     "0xb460f9ae1fea4f77107146c1960bb1c978118816",
     "0xf44e15badbc9a2c5d71a569d6dfb584a8cc97a2a"
    ],
-   "Writes": [],
+   "Writes": ["readTran1"],
    "StorageReads": {
-    "readTran2Storage": [
-     "22",
+    "0x000000000000000000000000000000000000ce10": [
+     "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
      "0x91646b8507bf2e54d7c3de9155442ba111546b81af1cbdd1f68eeb6926b98d58"
     ],
     "0x918146359264c492bd6934071c6bd31c854edbc3": [
@@ -182,17 +184,14 @@
      "0x0000000000000000000000000000000000000000000000000000000000000008"
     ]
    },
-   "StorageWrites": {
-    "readTran1Storage": [
-        "11"
-    ]
-   }
+   "StorageWrites": {}
   },
   {
    "Index": 2,
    "Hash": "tran3",
    "GasUsed": 1040373,
    "Reads": [
+    "readTran3",
     "0x0b655e7d966cb27998af94aa5719ab7bfe07d3b3",
     "0xb1a0bde36341065ca916c9f5619aca82a43659a3",
     "0x67cf66ece8e5ad2d30c1b88c770cde2e3ee811d6",
@@ -279,10 +278,10 @@
     "0x313e1b5edeebab73b6e869a74a896dc999e204cc",
     "0x9380fa34fd9e4fd14c06305fd7b6199089ed4eb9"
    ],
-   "Writes": [],
+   "Writes": ["readTran2"],
    "StorageReads": {
-    "readTran3Storage": [
-     "33",
+    "0x000000000000000000000000000000000000ce10": [
+     "0x7710c8bd31e5abcf8e2338ad2569e2a8461b242c3be6fae253ffa1f963ddd0df",
      "0x91646b8507bf2e54d7c3de9155442ba111546b81af1cbdd1f68eeb6926b98d58",
      "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
      "0xcff58fbbf19e274834dbbb0d6c1c84666c663932b89291bf061ab49d7e3f639a",
@@ -500,15 +499,11 @@
      "0x0000000000000000000000000000000000000000000000000000000000000002"
     ]
    },
-   "StorageWrites": {
-    "readTran2Storage": [
-        "22"
-    ]
-   }
+   "StorageWrites": {}
   },
   {
    "Index": 3,
-   "Hash": "tran4",
+   "Hash": "0x477c4d39cf1dce9c7c78a8423f303821d01662806a84c1d3a4a99d5ac1241fa5",
    "GasUsed": 154228,
    "Reads": [
     "0x000000000000000000000000000000000000ce10",
@@ -596,11 +591,7 @@
      "0x1c6136d97528473aee18074de3c00a9b6f80eb8fc8f3576c911e1cd5db4e7e8d"
     ]
    },
-   "StorageWrites": {
-    "readTran1Storage": [
-        "11"
-    ]
-   }
+   "StorageWrites": {}
   },
   {
    "Index": 4,
