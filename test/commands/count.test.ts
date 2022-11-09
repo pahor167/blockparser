@@ -9,11 +9,11 @@ describe("count", () => {
 
 async function run(): Promise<void> {
   const blocksString = (
-    await readFile("/Users/pahor/repo/blockparser/test/16026516.json")
+    await readFile("/Users/pahor/repo/blockparser/test/16064087.json")
   ).toString()
   const fileContent = JSON.parse(blocksString) as FileContent
 
-  console.log("transaction count:", fileContent.Txs.length)
+  console.log("transaction count in block:", fileContent.Txs.length)
   console.time("timer")
 
   const possibleTransactionChains =
@@ -24,7 +24,8 @@ async function run(): Promise<void> {
         gasCost: 0,
         length: 0,
         txHashes: new Set(),
-        writeTransactions: new Set(),
+        writeAddresses: new Set(),
+        writeStorage: {},
         block: fileContent.Block,
       },
       fileContent.Txs).filter(k => k.length > 0)
@@ -76,22 +77,32 @@ function traverseTransactions(
       continue
     }
 
-    const writes = [...filterOutKnownAddresses(Object.values(tx.StorageWrites).flat()), ...filterOutKnownAddresses(tx.Writes)]
-    const reads = [...Object.values(tx.StorageReads).flat(), ...tx.Reads, ...writes]
+    const writesAddresses = filterOutKnownAddresses(tx.Writes)
+    // eslint-disable-next-line unicorn/no-array-reduce, unicorn/prefer-object-from-entries
+    const writeStorage: Record<string, Set<string>> = Object.keys(tx.StorageWrites).reduce((prev, curr) => ({ ...prev, [curr]: new Set(tx.StorageWrites[curr]) }), {})
+    const readsAddresses = [...filterOutKnownAddresses(tx.Reads), ...writesAddresses]
+    // eslint-disable-next-line unicorn/no-array-reduce, unicorn/prefer-object-from-entries
+    // const readStorage: Record<string, Set<string>> = { ...Object.keys(tx.StorageReads).reduce((prev, curr) => ({ ...prev, [curr]: new Set(tx.StorageReads[curr]) }), {}), ...writeStorage }
 
-    if (reads.some(rt => parent.writeTransactions.has(rt))) {
+    if (readsAddresses.some(ra => parent.writeAddresses.has(ra))) {
       continue
     }
+
+    // // eslint-disable-next-line no-eq-null, eqeqeq
+    // if (Object.keys(readStorage).some(rs => parent.writeStorage[rs] != null && [...readStorage[rs]].some(rss => parent.writeStorage[rs].has(rss)))) {
+    //   continue
+    // }
 
     res = [
       ...res,
       ...traverseTransactions(
         ++depth,
         {
-          writeTransactions: new Set([
-            ...writes,
-            ...parent.writeTransactions,
+          writeAddresses: new Set([
+            ...writesAddresses,
+            ...parent.writeAddresses,
           ]),
+          writeStorage: { ...parent.writeStorage, ...writeStorage },
           block: parent.block,
           length: parent.length + 1,
           txHashes: new Set([...parent.txHashes, tx.Hash]),
@@ -188,7 +199,8 @@ interface FinalBlock {
 interface TransactionChain {
   block: number
   transactionCount: number
-  writeTransactions: Set<string>
+  writeAddresses: Set<string>
+  writeStorage: Record<string, Set<string>>
   length: number
   txHashes: Set<string>
   gasCost: number
