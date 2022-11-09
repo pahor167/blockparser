@@ -1,0 +1,5 @@
+{
+    "mochaExplorer.require": "ts-node/register",
+    "mochaExplorer.files": "test/**/*.ts",
+    "mochaExplorer.debuggerConfig": "Debug Mocha Tests",
+}

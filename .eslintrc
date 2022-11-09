@@ -1,0 +1,17 @@
+{
+  "extends": [
+    "oclif",
+    "oclif-typescript"
+  ],
+  "rules": {
+    "quotes": ["error", "double"],
+    "object-curly-spacing": ["error", "always"],
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "indent": ["error", 2, { "SwitchCase": 1 }],
+    "no-await-in-loop": "off",
+    "radix": "off",
+    "no-unused-vars": "off",
+    "no-unused-expressions": "off",
+    "no-unused-labels": "off"
+  }
+}
