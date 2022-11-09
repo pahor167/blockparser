@@ -11,7 +11,7 @@ export function buildGraph(fileContent: FileContent) {
     let edgeAdded = false
 
     for (const processedNode of alreadyProcessedNodes) {
-      edgeAdded = edgeAdded || decideEdge(newNode, processedNode)
+      edgeAdded = decideEdge(newNode, processedNode) || edgeAdded
     }
 
     alreadyProcessedNodes.push(newNode)
@@ -60,7 +60,7 @@ class Node {
 // returns if edge was added
 function decideEdge(newNode: Node, processedNode: Node): boolean {
   if ([...newNode.readAddresses].some(ra => processedNode.writeAddresses.has(ra))) {
-    addEdge(processedNode, newNode)
+    addEdge(newNode, processedNode)
     return true
   }
 
@@ -72,7 +72,7 @@ function decideEdge(newNode: Node, processedNode: Node): boolean {
   // eslint-disable-next-line no-eq-null, eqeqeq
   if (Object.keys(newNode.readStorage).some(rs => processedNode.writeStorage[rs] != null &&
       [...newNode.readStorage[rs]].some(rss => processedNode.writeStorage[rs].has(rss)))) {
-    addEdge(processedNode, newNode)
+    addEdge(newNode, processedNode)
     return true
   }
 
