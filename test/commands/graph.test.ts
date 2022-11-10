@@ -7,7 +7,7 @@ import { countHighestGas, countLevelOfParallelization } from "../../src/statisti
 describe("graph", () => {
   it("Graph from file", async () => {
     const blocksString = (
-      await readFile("/Users/pahor/repo/blockparser/test/test.json")
+      await readFile("/Users/pahor/repo/blockparser/test/16066282.json")
     ).toString()
     const fileContent = JSON.parse(blocksString) as FileContent
 

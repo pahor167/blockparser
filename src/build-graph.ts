@@ -51,8 +51,8 @@ export class Node {
     constructor(tx: Tx) {
       this.tx = tx
 
-      this.writeAddresses = new Set(tx.Writes)
-      for (const storageWriteKey of Object.keys(tx.StorageWrites)) {
+      this.writeAddresses = new Set(tx.Writes ?? [])
+      for (const storageWriteKey of Object.keys(tx.StorageWrites ?? {})) {
         // eslint-disable-next-line no-eq-null, eqeqeq
         if (this.writeStorage[storageWriteKey] == null) {
           this.writeStorage[storageWriteKey] = new Set()
@@ -62,9 +62,9 @@ export class Node {
       }
 
       // this.writeStorage = Object.keys(tx.StorageWrites).reduce((prev, curr) => ({ ...prev, [curr]: new Set(tx.StorageWrites[curr]) }), {})
-      this.readAddresses = new Set([...tx.Reads, ...tx.Writes])
+      this.readAddresses = new Set([...(tx.Reads ?? []), ...(tx.Writes ?? [])])
 
-      for (const storageWriteKey of Object.keys(tx.StorageWrites)) {
+      for (const storageWriteKey of Object.keys(tx.StorageWrites ?? {})) {
         // eslint-disable-next-line no-eq-null, eqeqeq
         if (this.readStorage[storageWriteKey] == null) {
           this.readStorage[storageWriteKey] = new Set()
@@ -73,7 +73,7 @@ export class Node {
         Object.values(tx.StorageWrites[storageWriteKey]).map(value => this.readStorage[storageWriteKey].add(value))
       }
 
-      for (const storageReadKey of Object.keys(tx.StorageReads)) {
+      for (const storageReadKey of Object.keys(tx.StorageReads ?? {})) {
         // eslint-disable-next-line no-eq-null, eqeqeq
         if (this.readStorage[storageReadKey] == null) {
           this.readStorage[storageReadKey] = new Set()
