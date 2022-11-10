@@ -1,6 +1,6 @@
 import { FileContent, Tx } from "./interfaces/file-content"
 
-export function buildGraph(fileContent: FileContent) {
+export function buildGraph(fileContent: FileContent): Graph {
   const forest: Node[] = []
   const alreadyProcessedNodes: Node[] = []
 
@@ -8,22 +8,38 @@ export function buildGraph(fileContent: FileContent) {
     const tx = fileContent.Txs[i]
     const newNode = new Node(tx)
 
-    let edgeAdded = false
-
     for (const processedNode of alreadyProcessedNodes) {
-      edgeAdded = decideEdge(newNode, processedNode) || edgeAdded
+      decideEdge(newNode, processedNode)
     }
 
     alreadyProcessedNodes.push(newNode)
-    if (!edgeAdded) {
-      forest.push(newNode)
-    }
   }
+  // This is not necessarily a forest like we thought before 
+  // because we can have:
+  // tx 0 -> tx 4
+  // tx 1 -> tx 4
+  // no more edges.
+  //
+  // so now both tx 0 and tx 1 end up being part of the same tree,
+  // while both appear as nodes in the list.
+  // I believe the term for this nodes is "Graph domain", the set
+  // of nodes of the dag from which there is no possible way to 
+  // get to them from other nodes. ("Graph codomain" is the opposite).
+  // return forest
 
-  return forest
+  // Since I don't think they are useful right now I'm leaving them out
+  // because in any case recalculating them is just a nodes.filter(noParent)
+  return new Graph(alreadyProcessedNodes)
 }
 
-class Node {
+export class Graph {
+  nodes: Node[]
+  constructor(allNodes: Node[]) {
+    this.nodes = allNodes
+  }
+}
+
+export class Node {
     tx: Tx
     edges: Node[] = []
     parents: Node[] = []
