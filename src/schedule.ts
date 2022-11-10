@@ -29,7 +29,7 @@ export class MachineSchedule {
         this.machine = machine
     }
     public assign(jobIdx: number, start: number, duration: number): Assignation {
-        assert(start < this.soonestAvailable)
+        assert(start >= this.soonestAvailable, "assigning before machine is ready")
         const assignation = new Assignation(jobIdx, this.machine, start, duration)
         this.assignations.push(assignation)
         this.soonestAvailable = assignation.finishTime()
@@ -133,7 +133,7 @@ class DependencyTracker {
     }
 
     public registerAssigned(idx: number, time: number) {
-        assert(this.available.has(idx))
+        assert(this.available.has(idx), "registering a non-available job")
         this.available.delete(idx)
         // remove dep for childs
         const node = this.graph.nodes[idx]
