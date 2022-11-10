@@ -503,6 +503,9 @@
    "StorageWrites": {
     "readTran2Storage": [
         "22"
+    ],
+    "readTran1Storage": [
+        "11"
     ]
    }
   },

@@ -5,7 +5,7 @@ import { buildGraph } from "../../src/build-graph"
 describe("graph", () => {
   it("Graph from file", async () => {
     const blocksString = (
-      await readFile("/Users/pahor/repo/blockparser/test/16064087.json")
+      await readFile("/Users/pahor/repo/blockparser/test/test.json")
     ).toString()
     const fileContent = JSON.parse(blocksString) as FileContent
 
