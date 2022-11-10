@@ -1,6 +1,8 @@
 import { readFile } from "node:fs/promises"
 import { FileContent } from "../../src/interfaces/file-content"
 import { buildGraph } from "../../src/build-graph"
+import { reduceGraph } from "../../src/graph-reduction"
+import { countHighestGas, countLevelOfParallelization } from "../../src/statistics"
 
 describe("graph", () => {
   it("Graph from file", async () => {
@@ -9,7 +11,16 @@ describe("graph", () => {
     ).toString()
     const fileContent = JSON.parse(blocksString) as FileContent
 
-    const forest = buildGraph(fileContent)
-    console.log("f", forest.nodes[0].tx.Hash)
+    const graph = buildGraph(fileContent)
+
+    const reducedGraph = reduceGraph(graph)
+
+    const highestGas = countHighestGas(reducedGraph)
+    const levelOfParallelization = countLevelOfParallelization(reducedGraph)
+
+    console.log("highestGas", highestGas)
+    console.log("levelOfParallelization", levelOfParallelization)
+
+    console.log("f", reducedGraph.nodes[0].tx.Hash)
   })
 }).timeout(99_999_999)

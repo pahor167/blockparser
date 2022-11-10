@@ -39,9 +39,9 @@ export class Graph {
 }
 
 export class Node {
-    tx: Tx
-    edges: Node[] = []
-    parents: Node[] = []
+    public tx: Tx
+    public edges: Node[] = []
+    public parents: Node[] = []
     public writeAddresses: Set<string>
     public writeStorage: Record<string, Set<string>> = {}
 
@@ -92,7 +92,7 @@ export class Node {
     }
 
     toString() {
-      return this.tx.Hash
+      return `${this.tx.Hash} ${this.tx.GasUsed}`
     }
 }
 

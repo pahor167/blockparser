@@ -6,7 +6,7 @@
   {
    "Index": 0,
    "Hash": "tran1",
-   "GasUsed": 348391,
+   "GasUsed": 10,
    "Reads": [   
    ],
    "Writes": [],
@@ -23,7 +23,7 @@
   {
    "Index": 1,
    "Hash": "tran2",
-   "GasUsed": 40668,
+   "GasUsed": 20,
    "Reads": [
    ],
    "Writes": [],
@@ -41,7 +41,7 @@
   {
    "Index": 2,
    "Hash": "tran3",
-   "GasUsed": 1040373,
+   "GasUsed": 30,
    "Reads": [
    ],
    "Writes": [],
@@ -60,7 +60,7 @@
   {
    "Index": 3,
    "Hash": "tran4",
-   "GasUsed": 154228,
+   "GasUsed": 40,
    "Reads": [
    ],
    "Writes": [],
@@ -75,7 +75,7 @@
   {
    "Index": 4,
    "Hash": "tran5",
-   "GasUsed": 465939,
+   "GasUsed": 50,
    "Reads": [
    ],
    "Writes": [],
