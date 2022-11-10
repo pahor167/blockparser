@@ -1,11 +1,16 @@
 import { FileContent, Tx } from "./interfaces/file-content"
 
 export function buildGraph(fileContent: FileContent): Graph {
+
+  // Activate this to provoke a conflict if two txs
+  // write to the same contract storage (not necessarily same keys).
+  const storageRootConflict = false
+
   const alreadyProcessedNodes: Node[] = []
 
   for (let i = 0; i < fileContent.Txs.length; i++) {
     const tx = fileContent.Txs[i]
-    const newNode = new Node(tx)
+    const newNode = new Node(tx, storageRootConflict)
 
     for (const processedNode of alreadyProcessedNodes) {
       decideEdge(newNode, processedNode)
@@ -48,10 +53,13 @@ export class Node {
     public readAddresses: Set<string>
     public readStorage: Record<string, Set<string>> = {}
 
-    constructor(tx: Tx) {
+    constructor(tx: Tx, storageRootConflict = false) {
       this.tx = tx
 
       this.writeAddresses = new Set(tx.Writes ?? [])
+      // Technically speaking, these are 'storageWriteContractAddresses' or better yet
+      // 'storageWriteContract' since they are contract addresses.
+      // The keys of storage read are actually the values (lists) in Tx.StorageWrites
       for (const storageWriteKey of Object.keys(tx.StorageWrites ?? {})) {
         // eslint-disable-next-line no-eq-null, eqeqeq
         if (this.writeStorage[storageWriteKey] == null) {
@@ -59,12 +67,18 @@ export class Node {
         }
 
         Object.values(tx.StorageWrites[storageWriteKey]).map(value => this.writeStorage[storageWriteKey].add(value))
+
+        if (storageRootConflict) {
+          this.writeAddresses.add(storageWriteKey)
+        }
       }
 
       // this.writeStorage = Object.keys(tx.StorageWrites).reduce((prev, curr) => ({ ...prev, [curr]: new Set(tx.StorageWrites[curr]) }), {})
       this.readAddresses = new Set([...(tx.Reads ?? []), ...(tx.Writes ?? [])])
 
       for (const storageWriteKey of Object.keys(tx.StorageWrites ?? {})) {
+        // Why are we not doing this in the previous for loop?
+
         // eslint-disable-next-line no-eq-null, eqeqeq
         if (this.readStorage[storageWriteKey] == null) {
           this.readStorage[storageWriteKey] = new Set()
