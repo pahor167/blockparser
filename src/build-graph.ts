@@ -1,7 +1,6 @@
 import { FileContent, Tx } from "./interfaces/file-content"
 
 export function buildGraph(fileContent: FileContent): Graph {
-  const forest: Node[] = []
   const alreadyProcessedNodes: Node[] = []
 
   for (let i = 0; i < fileContent.Txs.length; i++) {

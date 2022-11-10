@@ -10,6 +10,6 @@ describe("graph", () => {
     const fileContent = JSON.parse(blocksString) as FileContent
 
     const forest = buildGraph(fileContent)
-    console.log("f", forest[0].tx.Hash)
+    console.log("f", forest.nodes[0].tx.Hash)
   })
 }).timeout(99_999_999)
