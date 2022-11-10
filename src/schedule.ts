@@ -3,6 +3,7 @@ import { Node, Graph} from "./build-graph"
 import { assert } from "console"
 import { countHighestGas, criticalPathMemoized } from "./statistics"
 import { helpAddition } from "@oclif/core/lib/main"
+import { exit } from "process"
 
 export class Assignation {
     idx: number
@@ -73,10 +74,10 @@ export class Schedule {
     }
 
     public assign(jobIdx: number, machine: number, time: number) {
-        assert(jobIdx >= 0 && jobIdx < this.graph.nodes.length)
-        assert(this.jobAssignations[jobIdx] === null)
-        assert(machine >= 0 && machine < this.machines)
-        assert(this.dependenciesFinishedAt(jobIdx, time))
+        assert(jobIdx >= 0 && jobIdx < this.graph.nodes.length, jobIdx)
+        assert(this.jobAssignations[jobIdx] === null, "Job already assigned")
+        assert(machine >= 0 && machine < this.machines, "Inexistent machine")
+        assert(this.dependenciesFinishedAt(jobIdx, time), "Dependencies not finished")
         const duration = this.graph.nodes[jobIdx].tx.GasUsed
         const assg = this.schedules[machine].assign(jobIdx, time, duration)
         this.jobAssignations[jobIdx] = assg
@@ -176,7 +177,7 @@ function getCriticals(g: Graph): number[] {
 }
 
 function longestCriticalJob(jobs: Set<number>, criticals: number[]): number {
-    assert(jobs.size > 0)
+    assert(jobs.size > 0, "No jobs to pick longest critical")
     let criticalIdx = -1
     for (let idx of jobs) {
         if ((criticalIdx == -1) || (criticals[idx] > criticals[criticalIdx])) {
@@ -192,10 +193,10 @@ class Heap {
     // 'machines' amount of items
     values: Set<number> = new Set<number>()
     private peekMin(): number {
-        assert(this.values.size > 0)
+        assert(this.values.size > 0, "peekMin on empty Heap")
         let min = -3
         for (let v of this.values) {
-            if (v < min) min = v
+            if ((min < 0) || (v < min)) min = v
         }
         return min
     }
@@ -205,6 +206,7 @@ class Heap {
         return min
     }
     public repeatMin() {
+        assert(this.values.size > 0, "repeatMin on empty Heap")
         this.values.add(this.peekMin())
     }
     public add(v: number) {
@@ -238,13 +240,14 @@ export function scheduleHeuristic1(g: Graph, m: number): ScheduleResult {
     for (let i = 0; i < m; i++ ) {
         keyFrames.add(0)
     }
-    while (!depTracker.finished() || keyFrames.isEmpty()) {
+    while (!depTracker.finished() && !keyFrames.isEmpty()) {
         const time = keyFrames.getMin()
         const machine = sched.freeMachineAt(time)
         if (machine == -1) {
             // This means a machine is not available
             // This shouldn't be possible
-            assert(false)
+            assert(false, "No machine available")
+            exit(1)
         }
         const availables = depTracker.availableAt(time)
         if (availables.size == 0) {
@@ -260,6 +263,6 @@ export function scheduleHeuristic1(g: Graph, m: number): ScheduleResult {
         // add new keyframe
         keyFrames.add(sched.schedules[machine].soonestAvailable)
     }
-    assert(depTracker.finished())
+    assert(depTracker.finished(), "Dependency tracker not finished")
     return sched.result()
 }
