@@ -26,8 +26,8 @@ export async function processFolder(dirPath: string) {
     const result = {
       block: fileContent.Block,
       hash: fileContent.Hash,
-      highestGas: countHighestGas(reducedGraph),
-      levelOfParallelization: countLevelOfParallelization(reducedGraph),
+      highestGas: countHighestGas(reducedGraph), // this is the 'time' it would take if we had infinite cores
+      levelOfParallelization: countLevelOfParallelization(reducedGraph), 
     }
 
     const parsedFilePath = path.parse(file)

@@ -3,25 +3,34 @@ import { Graph, Node } from "./build-graph"
 export function countLevelOfParallelization(graph: Graph) {
   return graph.nodes.filter(n => n.parents.length === 0).length
 }
-
+// Calculates the critical path
 export function countHighestGas(graph: Graph) {
   const startingNodes = graph.nodes.filter(k => k.parents.length === 0)
   const gasCostsOfDifferentPaths: number[] = []
+  // memoization for recursion
+  const memo: Map<number, number> = new Map()
   for (const sNode of startingNodes) {
-    gasCostsOfDifferentPaths.push(highestGas(sNode))
+    gasCostsOfDifferentPaths.push(highestGas(sNode, memo))
   }
 
   return Math.max(...gasCostsOfDifferentPaths)
 }
 
-function highestGas(node: Node) {
+// Calculate Critical path
+function highestGas(node: Node, memo: Map<number, number>): number {
+  const idx = node.tx.Index
+  // memoize to avoid exponential complexity
+  if (memo.has(idx)) {
+    return memo.get(idx)!
+  }
   let gas = 0
   for (const edge of node.edges) {
-    const edgeGas = highestGas(edge)
+    const edgeGas = highestGas(edge, memo)
     if (edgeGas > gas) {
       gas = edgeGas
     }
   }
-
-  return gas + node.tx.GasUsed
+  const result = gas + node.tx.GasUsed
+  memo.set(idx, result)
+  return result
 }
