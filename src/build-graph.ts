@@ -103,10 +103,10 @@ function decideEdge(newNode: Node, processedNode: Node): boolean {
     return true
   }
 
-  // if ([...processedNode.readAddresses].some(ra => newNode.writeAddresses.has(ra))) {
-  //   addEdge(newNode, processedNode)
-  //   return true
-  // }
+  if ([...processedNode.readAddresses].some(ra => newNode.writeAddresses.has(ra))) {
+    addEdge(newNode, processedNode)
+    return true
+  }
 
   // eslint-disable-next-line no-eq-null, eqeqeq
   if (Object.keys(newNode.readStorage).some(rs => processedNode.writeStorage[rs] != null &&
@@ -115,12 +115,12 @@ function decideEdge(newNode: Node, processedNode: Node): boolean {
     return true
   }
 
-  // // eslint-disable-next-line no-eq-null, eqeqeq
-  // if (Object.keys(processedNode.readStorage).some(rs => newNode.writeStorage[rs] != null &&
-  //     [...processedNode.readStorage[rs]].some(rss => newNode.writeStorage[rs].has(rss)))) {
-  //   addEdge(newNode, processedNode)
-  //   return true
-  // }
+  // eslint-disable-next-line no-eq-null, eqeqeq
+  if (Object.keys(processedNode.readStorage).some(rs => newNode.writeStorage[rs] != null &&
+      [...processedNode.readStorage[rs]].some(rss => newNode.writeStorage[rs].has(rss)))) {
+    addEdge(newNode, processedNode)
+    return true
+  }
 
   return false
 }
