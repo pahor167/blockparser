@@ -3,6 +3,7 @@ import path from "node:path"
 import { buildGraph } from "./build-graph"
 import { reduceGraph } from "./graph-reduction"
 import { FileContent } from "./interfaces/file-content"
+import { scheduleHeuristic1 } from "./schedule"
 import { countHighestGas, countLevelOfParallelization } from "./statistics"
 
 export async function processFolder(dirPath: string) {
@@ -28,6 +29,8 @@ export async function processFolder(dirPath: string) {
       hash: fileContent.Hash,
       highestGas: countHighestGas(reducedGraph), // this is the 'time' it would take if we had infinite cores
       levelOfParallelization: countLevelOfParallelization(reducedGraph), 
+      heuristic2cores: scheduleHeuristic1(reducedGraph, 2),
+      heuristic3cores: scheduleHeuristic1(reducedGraph, 3),
     }
 
     const parsedFilePath = path.parse(file)

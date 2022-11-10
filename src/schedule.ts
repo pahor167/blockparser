@@ -1,6 +1,8 @@
 import { Tx } from "./interfaces/file-content"
 import { Node, Graph} from "./build-graph"
 import { assert } from "console"
+import { countHighestGas, criticalPathMemoized } from "./statistics"
+import { helpAddition } from "@oclif/core/lib/main"
 
 export class Assignation {
     idx: number
@@ -87,10 +89,177 @@ export class Schedule {
     public makespan(): number {
         return this.totalMakespan
     }
+
+    public freeMachineAt(time: number): number {
+        for (let i = 0; i < this.machines; i++ ) {
+            if (this.schedules[i].soonestAvailable <= time) {
+                return i
+            }
+        }
+        return -1
+    }
+
+    public result(): ScheduleResult {
+        return new ScheduleResult(this.machines, this.totalMakespan, this.schedules)
+    }
 }
 
-export function simulateScheduling(g: Graph, m: number): Schedule {
+class DependencyTracker {
+
+    graph: Graph
+    soonest: number[]
+    deps: number[]
+    available: Set<number> = new Set<number>()
+    assignedJobs: number = 0
+
+
+    constructor(graph: Graph) {
+        this.graph = graph
+        const n = this.graph.nodes.length
+        this.soonest = new Array(n)
+        this.deps = new Array(n)
+        // add the amount of deps for every node
+        for (let i = 0; i < n; i++ ) {
+            const node = this.graph.nodes[i]
+            this.deps[i] = node.parents.length
+            this.soonest[i] = -1
+            // if this node has no deps, it's available to start now
+            if (this.deps[i] == 0) {
+                this.soonest[i] = 0
+                this.available.add(i)
+            }
+        }
+    }
+
+    public registerAssigned(idx: number, time: number) {
+        assert(this.available.has(idx))
+        this.available.delete(idx)
+        // remove dep for childs
+        const node = this.graph.nodes[idx]
+        for (let i = 0; i < node.edges.length ; i++ ) {
+            const child = node.edges[i]
+            const childIdx = child.tx.Index
+            this.deps[childIdx]--
+            // If no more deps, add to available
+            if (this.deps[childIdx] == 0) {
+                this.available.add(childIdx)
+            }
+            // update their soonest starting time
+            const finishTime = time + node.tx.GasUsed
+            this.soonest[childIdx] = Math.max(this.soonest[childIdx], finishTime)
+        }
+    }
+
+    public availableAt(time: number): Set<number> {
+        const av = new Set<number>()
+        for (let idx of this.available) {
+            if (this.soonest[idx] >= time) {
+                av.add(time)
+            }
+        }
+        return av
+    }
+
+    public finished(): boolean {
+        return this.assignedJobs == this.graph.nodes.length
+    }
+}
+
+function getCriticals(g: Graph): number[] {
+    // memoization for recursion
+  const memo: Map<number, number> = new Map()
+  const criticals = new Array(g.nodes.length)
+  for (let i = 0; i < criticals.length; i++ ) {
+    criticals[i] = criticalPathMemoized(g.nodes[i], memo)
+  }
+  return criticals
+}
+
+function longestCriticalJob(jobs: Set<number>, criticals: number[]): number {
+    assert(jobs.size > 0)
+    let criticalIdx = -1
+    for (let idx of jobs) {
+        if ((criticalIdx == -1) || (criticals[idx] > criticals[criticalIdx])) {
+            criticalIdx = idx
+        }
+    }
+    return criticalIdx
+}
+
+class Heap {
+    // TODO: make this a real heap implementation or wrap an exiting one
+    // But maybe it's not needed since this will always have roughly
+    // 'machines' amount of items
+    values: Set<number> = new Set<number>()
+    private peekMin(): number {
+        assert(this.values.size > 0)
+        let min = -3
+        for (let v of this.values) {
+            if (v < min) min = v
+        }
+        return min
+    }
+    public getMin() {
+        const min = this.peekMin()
+        this.values.delete(min)
+        return min
+    }
+    public repeatMin() {
+        this.values.add(this.peekMin())
+    }
+    public add(v: number) {
+        this.values.add(v)
+    }
+    public isEmpty(): boolean {
+        return this.values.size == 0
+    }
+}
+
+export class ScheduleResult {
+    machines: number
+    makespan: number
+    assignments: MachineSchedule[]
+    constructor(machines: number, makespan: number, assignments: MachineSchedule[]) {
+        this.machines = machines
+        this.assignments = assignments
+        this.makespan = makespan
+    }
+}
+
+
+// First machine, longer critical job
+export function scheduleHeuristic1(g: Graph, m: number): ScheduleResult {
     const sched = new Schedule(g, m)
-    // complicated part :)
-    return sched
+    // Greedy on biggest critical path
+    const criticals = getCriticals(g)
+    const depTracker = new DependencyTracker(g)
+    const keyFrames = new Heap()
+    // Add keyframe 0 for each machine to start up
+    for (let i = 0; i < m; i++ ) {
+        keyFrames.add(0)
+    }
+    while (!depTracker.finished() || keyFrames.isEmpty()) {
+        const time = keyFrames.getMin()
+        const machine = sched.freeMachineAt(time)
+        if (machine == -1) {
+            // This means a machine is not available
+            // This shouldn't be possible
+            assert(false)
+        }
+        const availables = depTracker.availableAt(time)
+        if (availables.size == 0) {
+            // no availables at this time, skip keyframe, re add it for later
+            // when the current jobs finish running
+            keyFrames.repeatMin()
+            continue
+        }
+        // pick a job and assign it
+        const job = longestCriticalJob(availables, criticals)
+        sched.assign(job, machine, time)
+        depTracker.registerAssigned(job, time)
+        // add new keyframe
+        keyFrames.add(sched.schedules[machine].soonestAvailable)
+    }
+    assert(depTracker.finished())
+    return sched.result()
 }

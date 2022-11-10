@@ -10,14 +10,14 @@ export function countHighestGas(graph: Graph) {
   // memoization for recursion
   const memo: Map<number, number> = new Map()
   for (const sNode of startingNodes) {
-    gasCostsOfDifferentPaths.push(highestGas(sNode, memo))
+    gasCostsOfDifferentPaths.push(criticalPathMemoized(sNode, memo))
   }
 
   return Math.max(...gasCostsOfDifferentPaths)
 }
 
 // Calculate Critical path
-function highestGas(node: Node, memo: Map<number, number>): number {
+export function criticalPathMemoized(node: Node, memo: Map<number, number>): number {
   const idx = node.tx.Index
   // memoize to avoid exponential complexity
   if (memo.has(idx)) {
@@ -25,7 +25,7 @@ function highestGas(node: Node, memo: Map<number, number>): number {
   }
   let gas = 0
   for (const edge of node.edges) {
-    const edgeGas = highestGas(edge, memo)
+    const edgeGas = criticalPathMemoized(edge, memo)
     if (edgeGas > gas) {
       gas = edgeGas
     }
