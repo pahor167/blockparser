@@ -4,7 +4,7 @@ import { buildGraph } from "./build-graph"
 import { reduceGraph } from "./graph-reduction"
 import { FileContent } from "./interfaces/file-content"
 import { scheduleHeuristic1 } from "./schedule"
-import { countHighestGas, countLevelOfParallelization } from "./statistics"
+import { countHighestGas, percentageImprovement } from "./statistics"
 
 export async function processFolder(dirPath: string) {
   const files = await readdir(dirPath)
@@ -24,13 +24,19 @@ export async function processFolder(dirPath: string) {
     const graph = buildGraph(fileContent)
     const reducedGraph = reduceGraph(graph)
 
+    const heuristic2 = scheduleHeuristic1(reducedGraph, 2)
+    const heuristic3 = scheduleHeuristic1(reducedGraph, 3)
+
     const result = {
       block: fileContent.Block,
       gas: fileContent.GasUsed,
       hash: fileContent.Hash,
+      transactionCount: fileContent.Txs.length,
       criticalPath: countHighestGas(reducedGraph), // this is the 'time' it would take if we had infinite cores
-      heuristic2cores: scheduleHeuristic1(reducedGraph, 2),
-      heuristic3cores: scheduleHeuristic1(reducedGraph, 3),
+      heuristic2cores: heuristic2,
+      heuristic2PercentageImprovement: `${percentageImprovement(fileContent.GasUsed, heuristic2.makespan)}%`,
+      heuristic3cores: heuristic3,
+      heuristic3PercentageImprovement: `${percentageImprovement(fileContent.GasUsed, heuristic3.makespan)}%`,
     }
 
     const parsedFilePath = path.parse(file)
