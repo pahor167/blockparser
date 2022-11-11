@@ -77,12 +77,12 @@ function traverseTransactions(
       continue
     }
 
-    const writesAddresses = filterOutKnownAddresses(tx.Writes)
+    const writesAddresses = filterOutKnownAddresses(tx.Accesses.Writes)
     // eslint-disable-next-line unicorn/no-array-reduce, unicorn/prefer-object-from-entries
-    const writeStorage: Record<string, Set<string>> = Object.keys(tx.StorageWrites).reduce((prev, curr) => ({ ...prev, [curr]: new Set(tx.StorageWrites[curr]) }), {})
-    const readsAddresses = [...filterOutKnownAddresses(tx.Reads), ...writesAddresses]
+    const writeStorage: Record<string, Set<string>> = Object.keys(tx.Accesses.StorageWrites).reduce((prev, curr) => ({ ...prev, [curr]: new Set(tx.Accesses.StorageWrites[curr]) }), {})
+    const readsAddresses = [...filterOutKnownAddresses(tx.Accesses.Reads), ...writesAddresses]
     // eslint-disable-next-line unicorn/no-array-reduce, unicorn/prefer-object-from-entries
-    const readStorage: Record<string, Set<string>> = { ...Object.keys(tx.StorageReads).reduce((prev, curr) => ({ ...prev, [curr]: new Set(tx.StorageReads[curr]) }), {}), ...writeStorage }
+    const readStorage: Record<string, Set<string>> = { ...Object.keys(tx.Accesses.StorageReads).reduce((prev, curr) => ({ ...prev, [curr]: new Set(tx.Accesses.StorageReads[curr]) }), {}), ...writeStorage }
 
     if (readsAddresses.some(ra => parent.writeAddresses.has(ra))) {
       continue

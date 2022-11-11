@@ -1,10 +1,11 @@
+import { exit } from "process"
 import { FileContent, Tx } from "./interfaces/file-content"
 
 export function buildGraph(fileContent: FileContent): Graph {
 
   // Activate this to provoke a conflict if two txs
   // write to the same contract storage (not necessarily same keys).
-  const storageRootConflict = false
+  const storageRootConflict = true
 
   const alreadyProcessedNodes: Node[] = []
 
@@ -55,18 +56,18 @@ export class Node {
 
     constructor(tx: Tx, storageRootConflict = false) {
       this.tx = tx
-
-      this.writeAddresses = new Set(tx.Writes ?? [])
+      const acc = this.tx.Accesses
+      this.writeAddresses = new Set(acc.Writes ?? [])
       // Technically speaking, these are 'storageWriteContractAddresses' or better yet
       // 'storageWriteContract' since they are contract addresses.
       // The keys of storage read are actually the values (lists) in Tx.StorageWrites
-      for (const storageWriteKey of Object.keys(tx.StorageWrites ?? {})) {
+      for (const storageWriteKey of Object.keys(acc.StorageWrites ?? {})) {
         // eslint-disable-next-line no-eq-null, eqeqeq
         if (this.writeStorage[storageWriteKey] == null) {
           this.writeStorage[storageWriteKey] = new Set()
         }
 
-        Object.values(tx.StorageWrites[storageWriteKey]).map(value => this.writeStorage[storageWriteKey].add(value))
+        Object.values(acc.StorageWrites[storageWriteKey]).map(value => this.writeStorage[storageWriteKey].add(value))
 
         if (storageRootConflict) {
           this.writeAddresses.add(storageWriteKey)
@@ -74,9 +75,9 @@ export class Node {
       }
 
       // this.writeStorage = Object.keys(tx.StorageWrites).reduce((prev, curr) => ({ ...prev, [curr]: new Set(tx.StorageWrites[curr]) }), {})
-      this.readAddresses = new Set([...(tx.Reads ?? []), ...(tx.Writes ?? [])])
+      this.readAddresses = new Set([...(acc.Reads ?? []), ...(acc.Writes ?? [])])
 
-      for (const storageWriteKey of Object.keys(tx.StorageWrites ?? {})) {
+      for (const storageWriteKey of Object.keys(acc.StorageWrites ?? {})) {
         // Why are we not doing this in the previous for loop?
 
         // eslint-disable-next-line no-eq-null, eqeqeq
@@ -84,16 +85,16 @@ export class Node {
           this.readStorage[storageWriteKey] = new Set()
         }
 
-        Object.values(tx.StorageWrites[storageWriteKey]).map(value => this.readStorage[storageWriteKey].add(value))
+        Object.values(acc.StorageWrites[storageWriteKey]).map(value => this.readStorage[storageWriteKey].add(value))
       }
 
-      for (const storageReadKey of Object.keys(tx.StorageReads ?? {})) {
+      for (const storageReadKey of Object.keys(acc.StorageReads ?? {})) {
         // eslint-disable-next-line no-eq-null, eqeqeq
         if (this.readStorage[storageReadKey] == null) {
           this.readStorage[storageReadKey] = new Set()
         }
 
-        Object.values(tx.StorageReads[storageReadKey]).map(value => this.readStorage[storageReadKey].add(value))
+        Object.values(acc.StorageReads[storageReadKey]).map(value => this.readStorage[storageReadKey].add(value))
       }
     }
 

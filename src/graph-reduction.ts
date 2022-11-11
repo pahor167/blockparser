@@ -1,6 +1,7 @@
 import { Tx } from "./interfaces/file-content"
 import { Node, Graph} from "./build-graph"
 import { assert } from "console"
+import { exit } from "process"
 
 class Reachable {
     // Note: we can't use a union-find because the sets

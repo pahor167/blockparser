@@ -26,9 +26,9 @@ export async function processFolder(dirPath: string) {
 
     const result = {
       block: fileContent.Block,
+      gas: fileContent.GasUsed,
       hash: fileContent.Hash,
-      highestGas: countHighestGas(reducedGraph), // this is the 'time' it would take if we had infinite cores
-      levelOfParallelization: countLevelOfParallelization(reducedGraph), 
+      criticalPath: countHighestGas(reducedGraph), // this is the 'time' it would take if we had infinite cores
       heuristic2cores: scheduleHeuristic1(reducedGraph, 2),
       heuristic3cores: scheduleHeuristic1(reducedGraph, 3),
     }

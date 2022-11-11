@@ -223,8 +223,8 @@ export class ScheduleResult {
     assignments: MachineSchedule[]
     constructor(machines: number, makespan: number, assignments: MachineSchedule[]) {
         this.machines = machines
-        this.assignments = assignments
         this.makespan = makespan
+        this.assignments = assignments
     }
 }
 
