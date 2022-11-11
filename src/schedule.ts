@@ -1,8 +1,7 @@
 import { Tx } from "./interfaces/file-content"
 import { Node, Graph} from "./build-graph"
 import { assert } from "console"
-import { countHighestGas, criticalPathMemoized } from "./statistics"
-import { helpAddition } from "@oclif/core/lib/main"
+import { criticalPathMemoized } from "./statistics"
 import { exit } from "process"
 
 export class Assignation {
@@ -61,9 +60,11 @@ export class Schedule {
 
     private dependenciesFinishedAt(jobIdx: number, time: number): boolean {
         const node = this.graph.nodes[jobIdx]
+        assert(node !== undefined, "inexistent node requested")
+        assert(node.parents !== undefined, "parents of node undefined")
         for (let i = 0; i < node.parents.length; i++) {
             const depIdx = node.parents[i].tx.Index
-            if (this.jobAssignations[depIdx] === null) {
+            if (this.jobAssignations[depIdx] === undefined) {
                 return false
             }
             if (this.jobAssignations[depIdx].finishTime() > time) {
@@ -74,8 +75,8 @@ export class Schedule {
     }
 
     public assign(jobIdx: number, machine: number, time: number) {
-        assert(jobIdx >= 0 && jobIdx < this.graph.nodes.length, jobIdx)
-        assert(this.jobAssignations[jobIdx] === null, "Job already assigned")
+        assert(jobIdx >= 0 && jobIdx < this.graph.nodes.length, "Assigning inexistent job")
+        assert(this.jobAssignations[jobIdx] === undefined, "Job already assigned")
         assert(machine >= 0 && machine < this.machines, "Inexistent machine")
         assert(this.dependenciesFinishedAt(jobIdx, time), "Dependencies not finished")
         const duration = this.graph.nodes[jobIdx].tx.GasUsed
@@ -134,12 +135,15 @@ class DependencyTracker {
 
     public registerAssigned(idx: number, time: number) {
         assert(this.available.has(idx), "registering a non-available job")
+        assert(this.soonest[idx] <= time, "registering before available time for job")
         this.available.delete(idx)
+        this.assignedJobs++
         // remove dep for childs
         const node = this.graph.nodes[idx]
         for (let i = 0; i < node.edges.length ; i++ ) {
             const child = node.edges[i]
             const childIdx = child.tx.Index
+            assert(childIdx < this.graph.nodes.length, "childIdx is not a real node")
             this.deps[childIdx]--
             // If no more deps, add to available
             if (this.deps[childIdx] == 0) {
@@ -154,8 +158,8 @@ class DependencyTracker {
     public availableAt(time: number): Set<number> {
         const av = new Set<number>()
         for (let idx of this.available) {
-            if (this.soonest[idx] >= time) {
-                av.add(time)
+            if (this.soonest[idx] <= time) {
+                av.add(idx)
             }
         }
         return av
@@ -205,10 +209,6 @@ class Heap {
         this.values.delete(min)
         return min
     }
-    public repeatMin() {
-        assert(this.values.size > 0, "repeatMin on empty Heap")
-        this.values.add(this.peekMin())
-    }
     public add(v: number) {
         this.values.add(v)
     }
@@ -236,13 +236,12 @@ export function scheduleHeuristic1(g: Graph, m: number): ScheduleResult {
     const criticals = getCriticals(g)
     const depTracker = new DependencyTracker(g)
     const keyFrames = new Heap()
-    // Add keyframe 0 for each machine to start up
-    for (let i = 0; i < m; i++ ) {
-        keyFrames.add(0)
-    }
+    // Add keyframe 0 to start
+    keyFrames.add(0)
+
     while (!depTracker.finished() && !keyFrames.isEmpty()) {
         const time = keyFrames.getMin()
-        const machine = sched.freeMachineAt(time)
+        let machine = sched.freeMachineAt(time)
         if (machine == -1) {
             // This means a machine is not available
             // This shouldn't be possible
@@ -250,19 +249,22 @@ export function scheduleHeuristic1(g: Graph, m: number): ScheduleResult {
             exit(1)
         }
         const availables = depTracker.availableAt(time)
-        if (availables.size == 0) {
-            // no availables at this time, skip keyframe, re add it for later
-            // when the current jobs finish running
-            keyFrames.repeatMin()
-            continue
+        while (availables.size > 0 && machine != -1) {
+            // pick a job and assign it
+            const job = longestCriticalJob(availables, criticals)
+            sched.assign(job, machine, time)
+            depTracker.registerAssigned(job, time)
+            availables.delete(job)
+            // add new keyframe
+            keyFrames.add(sched.schedules[machine].soonestAvailable)
+            // Pick the next machine. This time there could be none
+            machine = sched.freeMachineAt(time)
         }
-        // pick a job and assign it
-        const job = longestCriticalJob(availables, criticals)
-        sched.assign(job, machine, time)
-        depTracker.registerAssigned(job, time)
-        // add new keyframe
-        keyFrames.add(sched.schedules[machine].soonestAvailable)
     }
     assert(depTracker.finished(), "Dependency tracker not finished")
+    if (depTracker.assignedJobs < g.nodes.length) {
+        // Code didn't work.
+        exit(5)
+    }
     return sched.result()
 }
