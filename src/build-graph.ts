@@ -5,7 +5,7 @@ export function buildGraph(fileContent: FileContent): Graph {
 
   // Activate this to provoke a conflict if two txs
   // write to the same contract storage (not necessarily same keys).
-  const storageRootConflict = true
+  const storageRootConflict = false
 
   const alreadyProcessedNodes: Node[] = []
 
